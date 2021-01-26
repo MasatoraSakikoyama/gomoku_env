@@ -1,0 +1,47 @@
+version: '3'
+services:
+  nignx:
+    image: nginx:latest
+    container_name: gomoku_nginx
+    ports:
+      - 80:80
+    volumes:
+      - type: bind
+        source: ${path}/gomoku_env/templates/gomoku.conf
+        target: /etc/nginx/conf.d/default.conf
+    depends_on:
+      - client
+      - server
+  client:
+    image: node:latest
+    container_name: gomoku_client
+    expose:
+      - 3000
+    volumes:
+      - type: bind
+        source: ${path}/gomoku_client
+        target: /var/www/gomoku_client
+    command: bash -c "cd /var/www/gomoku_client && npm install && npm start"
+  server:
+    image: python:latest
+    container_name: gomoku_server
+    expose:
+      - 8000
+    volumes:
+      - type: bind
+        source: ${path}/gomoku_server
+        target: /var/www/gomoku_server
+    depends_on:
+      - mysql
+      - redis
+    command: bash -c "cd /var/www/gomoku_server && pip install --upgrade pip && pip install -f requirements.txt && cd src && python manage.py runserver 0.0.0.0:8000 --settings=settings.develop"
+  mysql:
+    image: mysql:latest
+    container_name: gomoku_db
+    expose:
+      - 3306
+  redis:
+    image: redis:latest
+    container_name: gomoku_redis
+    expose:
+      - 6379
