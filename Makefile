@@ -1,6 +1,6 @@
 .PHONY: run
 run:
-	. ./boot
+	docker-compose up
 .PHONY: stop
 stop:
 	docker ps -aq | xargs docker stop

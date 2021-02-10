@@ -7,7 +7,7 @@ services:
       - 80:80
     volumes:
       - type: bind
-        source: ${path}/gomoku_env/templates/gomoku.conf
+        source: ${P}/gomoku_env/templates/gomoku.conf
         target: /etc/nginx/conf.d/default.conf
     depends_on:
       - client
@@ -16,12 +16,12 @@ services:
     image: node:latest
     container_name: gomoku_client
     expose:
-      - 3000
+      - 8080
     volumes:
       - type: bind
-        source: ${path}/gomoku_client
-        target: /var/www/gomoku_client
-    command: bash -c "cd /var/www/gomoku_client && npm install && npm start"
+        source: ${P}/gomoku_client
+        target: /home/gomoku_client
+    command: bash -c "cd /home/gomoku_client && yarn install && yarn serve"
   server:
     image: python:latest
     container_name: gomoku_server
@@ -29,17 +29,23 @@ services:
       - 8000
     volumes:
       - type: bind
-        source: ${path}/gomoku_server
-        target: /var/www/gomoku_server
+        source: ${P}/gomoku_server
+        target: /home/gomoku_server
     depends_on:
-      - mysql
+      - postgres
       - redis
-    command: bash -c "cd /var/www/gomoku_server && pip install --upgrade pip && pip install -f requirements.txt && cd src && python manage.py runserver 0.0.0.0:8000 --settings=settings.develop"
-  mysql:
-    image: mysql:latest
+    command: bash -c "cd /home/gomoku_server && pip install --upgrade pip && pip install -r requirements.txt && cd src && python manage.py runserver 0:8000 --settings=settings.develop"
+  postgres:
+    image: postgres:latest
     container_name: gomoku_db
+    restart: always
     expose:
-      - 3306
+      - 5432
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD}
   redis:
     image: redis:latest
     container_name: gomoku_redis
